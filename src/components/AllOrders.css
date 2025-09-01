@@ -1,0 +1,146 @@
+.all-orders-container {
+  max-width: 1200px;
+  margin: 20px auto;
+  padding: 20px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  font-family: Arial, sans-serif;
+}
+
+.all-orders-container h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.orders-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.orders-table th,
+.orders-table td {
+  padding: 12px 15px;
+  border: 1px solid #ddd;
+  text-align: left;
+  vertical-align: middle;
+  font-size: 14px;
+  color: #333;
+}
+
+.orders-table th {
+  background-color: #f7f7f7;
+  font-weight: 600;
+}
+
+.status-cell span {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;
+  color: #fff;
+  font-weight: 600;
+  font-size: 13px;
+  user-select: none;
+}
+
+.status-delivered {
+  background-color: #28a745; /* green */
+}
+
+.status-pending {
+  background-color: #ffc107; /* amber */
+  color: #212529;
+}
+
+.status-cancelled {
+  background-color: #dc3545; /* red */
+}
+
+.deliver-button,
+.cancel-button,
+.action-buttons button {
+  cursor: pointer;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 5px;
+  font-size: 13px;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+  user-select: none;
+}
+
+.deliver-button {
+  background-color: #28a745;
+  color: white;
+}
+
+.deliver-button:hover {
+  background-color: #218838;
+}
+
+.cancel-button {
+  background-color: #dc3545;
+  color: white;
+}
+
+.cancel-button:hover {
+  background-color: #c82333;
+}
+
+.action-buttons button {
+  margin-right: 6px;
+  background-color: #007bff;
+  color: white;
+}
+
+.action-buttons button:hover {
+  background-color: #0056b3;
+}
+
+.delete-btn {
+  background-color: #dc3545 !important;
+}
+
+.delete-btn:hover {
+  background-color: #c82333 !important;
+}
+
+.no-orders {
+  text-align: center;
+  padding: 20px;
+  font-size: 16px;
+  color: #777;
+}
+
+/* --- Toast content styling --- */
+.toast-order-details {
+  text-align: left;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #333;
+  word-wrap: break-word;
+  white-space: normal;
+}
+
+.toast-order-details p {
+  margin: 4px 0;
+}
+
+.toast-order-details strong {
+  color: #000;
+}
+
+.toast-order-details ul {
+  padding-left: 20px;
+  margin: 6px 0;
+}
+
+.toast-order-details li {
+  margin: 3px 0;
+  list-style-type: disc;
+}
