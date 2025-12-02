@@ -10,6 +10,9 @@ const AllOrders = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
+  // ================================
+  // Fetch all orders
+  // ================================
   useEffect(() => {
     const fetchOrders = async () => {
       try {
@@ -22,16 +25,22 @@ const AllOrders = () => {
           setError('Invalid data format from server');
         }
       } catch (err) {
+        console.error(err);
         setError('Failed to load orders');
       }
     };
-
     fetchOrders();
   }, []);
 
+  // ================================
+  // Update order status (Delivered / Cancelled)
+  // ================================
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
-      const res = await axios.put(`http://localhost:5000/api/order/${orderId}/status`, { status: newStatus });
+      const res = await axios.put(`http://localhost:5000/api/order/${orderId}`, {
+        status: newStatus,
+      });
+
       if (res.data.success) {
         setOrders((prev) =>
           prev.map((order) =>
@@ -43,7 +52,7 @@ const AllOrders = () => {
         toast.error('Failed to update status');
       }
     } catch (err) {
-      console.error('Error updating order status:', err);
+      console.error(err);
       toast.error('Error updating status');
     }
   };
@@ -56,44 +65,53 @@ const AllOrders = () => {
     updateOrderStatus(orderId, 'Cancelled');
   };
 
+  // ================================
+  // Delete order
+  // ================================
   const handleDelete = async (orderId) => {
-    if (window.confirm('Are you sure you want to delete this order?')) {
-      try {
-        await axios.delete(`http://localhost:5000/api/order/${orderId}`);
-        setOrders((prev) => prev.filter((order) => order._id !== orderId));
-        toast.success('Order deleted successfully');
-      } catch (err) {
-        console.error('Failed to delete order:', err);
-        toast.error('Failed to delete order.');
-      }
+    if (!window.confirm('Are you sure you want to delete this order?')) return;
+
+    try {
+      await axios.delete(`http://localhost:5000/api/order/${orderId}`);
+      setOrders((prev) => prev.filter((order) => order._id !== orderId));
+      toast.success('Order deleted successfully');
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to delete order');
     }
   };
 
+  // ================================
+  // View full order details (Popup)
+  // ================================
   const handleView = (order) => {
     toast.info(
       <>
-        <strong>Customer:</strong> {order.address?.name}<br />
-        <strong>Address:</strong> {order.address?.line1}, {order.address?.city} - {order.address?.pincode}<br />
+        <strong>Order ID:</strong> {order.orderId}<br />
+        <strong>Restaurant:</strong> {order.restaurantName}<br /><br />
+
+        <strong>Customer:</strong> {order.address?.name || "N/A"} <br />
+        <strong>Address:</strong> {order.address?.line1}, {order.address?.city} - {order.address?.pincode}<br /><br />
+
         <strong>Items:</strong>
         <ul>
           {order.items?.map((item, i) => (
             <li key={i}>{item.name} × {item.quantity}</li>
           ))}
         </ul>
-        <strong>Total:</strong> ₹{order.totalAmount}<br />
+        <strong>Total Amount:</strong> ₹{order.total}<br />
         <strong>Status:</strong> {order.status}
       </>,
       {
         position: "top-right",
         autoClose: 8000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
       }
     );
   };
 
+  // ======================================
+  // Render
+  // ======================================
   return (
     <div className="all-orders-container">
       <h2>All Orders</h2>
@@ -103,11 +121,11 @@ const AllOrders = () => {
           <thead>
             <tr>
               <th>#</th>
+              <th>Order ID</th>
               <th>Customer</th>
-              <th>Address</th>
+              <th>Restaurant</th>
               <th>Items</th>
               <th>Total (₹)</th>
-              <th>Payment</th>
               <th>Status</th>
               <th>Delivery</th>
               <th>Actions</th>
@@ -119,10 +137,10 @@ const AllOrders = () => {
               orders.map((order, index) => (
                 <tr key={order._id}>
                   <td>{index + 1}</td>
+                  <td>{order.orderId}</td>
                   <td>{order.address?.name || 'N/A'}</td>
-                  <td>
-                    {order.address?.line1}, {order.address?.city} - {order.address?.pincode}
-                  </td>
+                  <td>{order.restaurantName}</td>
+
                   <td>
                     {order.items?.map((item, idx) => (
                       <div key={idx}>
@@ -130,17 +148,19 @@ const AllOrders = () => {
                       </div>
                     ))}
                   </td>
-                  <td>₹{order.totalAmount}</td>
-                  <td>{order.paymentMethod || 'N/A'}</td>
+
+                  <td>₹{order.total}</td>
+
                   <td className="status-cell">
                     {order.status === 'Delivered' ? (
                       <span className="status-delivered">Delivered</span>
                     ) : order.status === 'Cancelled' ? (
                       <span className="status-cancelled">Cancelled</span>
                     ) : (
-                      <span className="status-pending">Pending</span>
+                      <span className="status-pending">{order.status}</span>
                     )}
                   </td>
+
                   <td>
                     {(order.status !== 'Delivered' && order.status !== 'Cancelled') && (
                       <>
@@ -148,18 +168,20 @@ const AllOrders = () => {
                           className="deliver-button"
                           onClick={() => handleMarkDelivered(order._id)}
                         >
-                          Mark as Delivered
+                          Mark Delivered
                         </button>
+
                         <button
                           className="cancel-button"
                           onClick={() => handleMarkCancelled(order._id)}
                           style={{ marginLeft: '8px' }}
                         >
-                          Mark as Cancelled
+                          Cancel
                         </button>
                       </>
                     )}
                   </td>
+
                   <td>
                     <div className="action-buttons">
                       <button onClick={() => handleView(order)}>View</button>

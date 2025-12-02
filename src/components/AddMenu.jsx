@@ -10,9 +10,19 @@ const AddMenu = () => {
     price: '',
     description: '',
     image: '',
-    restaurantId: ''
-    // Removed category field
+    restaurantId: '',
+    category: ''   // ✅ category added
   });
+
+  const categories = [
+    "Starter",
+    "Main Course",
+    "Dessert",
+    "Beverage",
+    "Seafood",
+    "Vegetarian",
+    "Non-Veg"
+  ];
 
   // Fetch all restaurants on mount
   useEffect(() => {
@@ -61,7 +71,8 @@ const AddMenu = () => {
         price: '',
         description: '',
         image: '',
-        restaurantId: ''
+        restaurantId: '',
+        category: ''
       });
     } catch (error) {
       console.error('Error adding menu:', error);
@@ -70,9 +81,9 @@ const AddMenu = () => {
   };
 
   return (
-    <div>
+    <div style={{ maxWidth: "500px", margin: "auto", padding: "20px" }}>
       <form onSubmit={handleSubmit}>
-        <h2>Add Menu</h2>
+        <h2 style={{ marginBottom: "10px" }}>Add Menu</h2>
 
         {/* Restaurant Selection */}
         <select
@@ -80,11 +91,28 @@ const AddMenu = () => {
           value={menuItem.restaurantId}
           onChange={handleChange}
           required
+          style={{ width: "100%", padding: "8px", marginBottom: "10px" }}
         >
           <option value="">Select Restaurant</option>
           {restaurants.map((rest) => (
             <option key={rest._id} value={rest._id}>
               {rest.name}
+            </option>
+          ))}
+        </select>
+
+        {/* Category */}
+        <select
+          name="category"
+          value={menuItem.category}
+          onChange={handleChange}
+          required
+          style={{ width: "100%", padding: "8px", marginBottom: "10px" }}
+        >
+          <option value="">Select Category</option>
+          {categories.map((cat, index) => (
+            <option key={index} value={cat}>
+              {cat}
             </option>
           ))}
         </select>
@@ -97,6 +125,7 @@ const AddMenu = () => {
           value={menuItem.name}
           onChange={handleChange}
           required
+          style={{ width: "100%", padding: "8px", marginBottom: "10px" }}
         />
 
         {/* Price */}
@@ -107,6 +136,7 @@ const AddMenu = () => {
           value={menuItem.price}
           onChange={handleChange}
           required
+          style={{ width: "100%", padding: "8px", marginBottom: "10px" }}
         />
 
         {/* Description */}
@@ -116,6 +146,7 @@ const AddMenu = () => {
           value={menuItem.description}
           onChange={handleChange}
           required
+          style={{ width: "100%", padding: "8px", marginBottom: "10px", height: "80px" }}
         />
 
         {/* Image Upload */}
@@ -124,6 +155,7 @@ const AddMenu = () => {
           accept="image/*"
           onChange={handleImageChange}
           required
+          style={{ marginBottom: "10px" }}
         />
 
         {/* Preview */}
@@ -132,15 +164,28 @@ const AddMenu = () => {
             src={menuItem.image}
             alt="Preview"
             width="150"
-            style={{ marginTop: '10px', display: 'block' }}
+            style={{ marginTop: '10px', display: 'block', borderRadius: "6px" }}
           />
         )}
 
         {/* Submit */}
-        <button type="submit">Add Menu</button>
+        <button
+          type="submit"
+          style={{
+            width: "100%",
+            padding: "10px",
+            backgroundColor: "#4CAF50",
+            color: "white",
+            border: "none",
+            cursor: "pointer",
+            marginTop: "15px"
+          }}
+        >
+          Add Menu
+        </button>
       </form>
 
-      {/* Toast Notification Container */}
+      {/* Toast Notification */}
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
     </div>
   );

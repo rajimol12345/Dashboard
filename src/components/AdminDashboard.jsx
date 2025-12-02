@@ -1,8 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer
 } from 'recharts';
+
 const AdminOverviewDashboard = () => {
   const [overviewStats, setOverviewStats] = useState({
     users: 0,
@@ -12,15 +19,22 @@ const AdminOverviewDashboard = () => {
   });
 
   const [activities, setActivities] = useState([]);
-
   const [orderTrends, setOrderTrends] = useState([]);
 
   useEffect(() => {
     const fetchOverviewData = async () => {
       try {
         const res = await axios.get('http://localhost:5000/api/admin/overview');
-        setOverviewStats(res.data.stats);
-        setActivities(res.data.activities);
+
+        // Ensure safe values even if backend returns null or undefined
+        setOverviewStats({
+          users: res.data.stats?.users ?? 0,
+          restaurants: res.data.stats?.restaurants ?? 0,
+          orders: res.data.stats?.orders ?? 0,
+          revenue: res.data.stats?.revenue ?? 0,
+        });
+
+        setActivities(res.data.activities || []);
       } catch (err) {
         console.error('Error fetching overview data:', err);
       }
@@ -46,25 +60,33 @@ const AdminOverviewDashboard = () => {
       <div className="dashboard-cards">
         <div className="card">
           <h3>Users</h3>
-          <div className="value">{overviewStats.users.toLocaleString()}</div>
+          <div className="value">
+            {(overviewStats.users ?? 0).toLocaleString()}
+          </div>
           <div className="sub-value">+5.2% this month</div>
         </div>
 
         <div className="card">
           <h3>Restaurants</h3>
-          <div className="value">{overviewStats.restaurants}</div>
+          <div className="value">
+            {(overviewStats.restaurants ?? 0).toLocaleString()}
+          </div>
           <div className="sub-value">+3 added</div>
         </div>
 
         <div className="card">
           <h3>Orders</h3>
-          <div className="value">{overviewStats.orders.toLocaleString()}</div>
+          <div className="value">
+            {(overviewStats.orders ?? 0).toLocaleString()}
+          </div>
           <div className="sub-value">+8.7% this month</div>
         </div>
 
         <div className="card">
           <h3>Revenue</h3>
-          <div className="value">₹{overviewStats.revenue.toLocaleString()}</div>
+          <div className="value">
+            ₹{(overviewStats.revenue ?? 0).toLocaleString()}
+          </div>
           <div className="sub-value">+10.4% from last month</div>
         </div>
       </div>
@@ -79,7 +101,12 @@ const AdminOverviewDashboard = () => {
               <XAxis dataKey="name" />
               <YAxis />
               <Tooltip />
-              <Line type="monotone" dataKey="orders" stroke="#ff6600" strokeWidth={3} />
+              <Line
+                type="monotone"
+                dataKey="orders"
+                stroke="#ff6600"
+                strokeWidth={3}
+              />
             </LineChart>
           </ResponsiveContainer>
         </div>
