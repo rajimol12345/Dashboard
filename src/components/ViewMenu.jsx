@@ -10,7 +10,7 @@ const ViewMenu = () => {
   useEffect(() => {
     const fetchMenu = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/menu/item/${id}`);
+        const res = await axios.get(`/api/menu/item/${id}`);
         setMenu(res.data);
       } catch (err) {
         console.error('Fetch failed:', err);

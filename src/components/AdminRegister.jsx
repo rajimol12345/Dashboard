@@ -36,7 +36,7 @@ const AdminRegister = () => {
 
   const onSubmit = async (data) => {
     try {
-      const response = await axios.post('http://localhost:5000/api/admin/register', {
+      const response = await axios.post('/api/admin/register', {
         name: data.name,
         email: data.email,
         password: data.password,

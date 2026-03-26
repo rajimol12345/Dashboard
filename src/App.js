@@ -5,6 +5,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import axios from 'axios';
 
 // Admin
 import Adminlogin from './components/Adminlogin';
@@ -27,6 +28,11 @@ import AnalyticsDashboard from './components/AnalyticsDashboard.jsx';
 import ViewMenu from './components/ViewMenu.jsx';
 import EditOrder from './components/EditOrder.jsx';
 import Logout from './components/Logout.jsx';
+import SupportChat from './components/SupportChat.jsx';
+
+// Set global API base URL
+axios.defaults.baseURL = 'http://localhost:5000';
+
 function App() {
   return (
     <>
@@ -57,6 +63,7 @@ function App() {
           <Route path="menus/edit/:id" element={<EditMenu />} />
           <Route path="analytics" element={<AnalyticsDashboard />} />
           <Route path="menus/view/:id" element={<ViewMenu />} />
+          <Route path="support" element={<SupportChat />} />
           <Route path="logout" element={<Logout />} />
         </Route>
 

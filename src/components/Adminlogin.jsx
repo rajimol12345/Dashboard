@@ -18,7 +18,7 @@ const AdminLogin = () => {
     setSuccess('');
 
     try {
-      const response = await axios.post('http://localhost:5000/api/admin/login', {
+      const response = await axios.post('/api/admin/login', {
         email: data.email,
         password: data.password,
       });

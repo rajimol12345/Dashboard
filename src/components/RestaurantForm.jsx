@@ -36,7 +36,7 @@ const RestaurantForm = () => {
     e.preventDefault();
 
     try {
-      await axios.post('http://localhost:5000/api/restaurants/restaurants', formData, {
+      await axios.post('/api/restaurants/restaurants', formData, {
         headers: { 'Content-Type': 'application/json' },
       });
 

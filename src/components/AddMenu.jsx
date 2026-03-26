@@ -26,7 +26,7 @@ const AddMenu = () => {
 
   // Fetch all restaurants on mount
   useEffect(() => {
-    axios.get('http://localhost:5000/api/restaurants/list')
+    axios.get('/api/restaurants/list')
       .then(res => {
         setRestaurants(Array.isArray(res.data) ? res.data : []);
       })
@@ -61,7 +61,7 @@ const AddMenu = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post('http://localhost:5000/api/menu/addmenu', menuItem);
+      const res = await axios.post('/api/menu/addmenu', menuItem);
       console.log('Menu added:', res.data);
       toast.success('Menu added successfully');
 

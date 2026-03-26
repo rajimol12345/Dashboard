@@ -7,8 +7,6 @@ const Header = ({ toggleSidebar, collapsed }) => {
     <header className="admin-header">
       {/* === Left Section === */}
       <div className="header-left">
-        <h3 className="logo-text">{collapsed ? 'E' : 'EatYoWay'}</h3>
-
         <button onClick={toggleSidebar} className="sidebar-toggle-btn">
           <span className="material-symbols-outlined">menu</span>
         </button>

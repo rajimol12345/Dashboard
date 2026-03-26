@@ -1,11 +1,14 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 
-const Sidebar = ({ isOpen }) => {
+const Sidebar = ({ isOpen, onClose }) => {
   return (
     <aside className={`sidebar ${isOpen ? 'open' : 'closed'}`}>
       <div className="sidebar-header">
-        {isOpen && <h2 className="sidebar-title">Dashboard</h2>}
+        {isOpen && <h2 className="sidebar-title">EatYoWay</h2>}
+        <button className="mobile-close-btn" onClick={onClose}>
+          <span className="material-symbols-outlined">close</span>
+        </button>
       </div>
 
       <ul className="sidebar-links">
@@ -37,6 +40,13 @@ const Sidebar = ({ isOpen }) => {
           <NavLink to="/admin/allorders" title="Orders">
             <span className="material-symbols-outlined">receipt_long</span>
             {isOpen && <span className="link-text">Orders</span>}
+          </NavLink>
+        </li>
+
+        <li>
+          <NavLink to="/admin/support" title="Support">
+            <span className="material-symbols-outlined">headset_mic</span>
+            {isOpen && <span className="link-text">Support</span>}
           </NavLink>
         </li>
 

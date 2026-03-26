@@ -29,7 +29,7 @@ const AnalyticsDashboard = () => {
   // Fetch Orders
   useEffect(() => {
     axios
-      .get('http://localhost:5000/api/order/all')
+      .get('/api/order/all')
       .then((res) => setOrders(res.data || []))
       .catch((err) => {
         console.error(err);

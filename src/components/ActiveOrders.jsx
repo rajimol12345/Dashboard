@@ -8,7 +8,7 @@ const ActiveOrders = () => {
   // Fetch active (non-delivered) orders from the backend
   useEffect(() => {
     axios
-      .get('http://localhost:5000/api/order/all')
+      .get('/api/order/all')
       .then((res) => {
         const active = res.data.filter(order => order.status !== 'Delivered');
         setOrders(active);
@@ -21,7 +21,7 @@ const ActiveOrders = () => {
 
   const markAsDelivered = async (orderId) => {
     try {
-      const response = await axios.put(`http://localhost:5000/api/order/${orderId}/deliver`);
+      const response = await axios.put(`/api/order/${orderId}/deliver`);
       if (response.data.success) {
         setOrders(prev => prev.filter(order => order._id !== orderId));
       } else {

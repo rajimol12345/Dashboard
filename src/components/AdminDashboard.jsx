@@ -24,7 +24,7 @@ const AdminOverviewDashboard = () => {
   useEffect(() => {
     const fetchOverviewData = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/admin/overview');
+        const res = await axios.get('/api/admin/overview');
 
         // Ensure safe values even if backend returns null or undefined
         setOverviewStats({
@@ -42,7 +42,7 @@ const AdminOverviewDashboard = () => {
 
     const fetchOrderTrends = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/admin/stats');
+        const res = await axios.get('/api/admin/stats');
         setOrderTrends(res.data.orderTrends || []);
       } catch (err) {
         console.error('Error fetching order trends:', err);

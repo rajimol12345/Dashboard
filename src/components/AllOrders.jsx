@@ -2,42 +2,77 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { toast, ToastContainer } from 'react-toastify';
+import { 
+  FaEye, FaEdit, FaTrash, FaSearch, FaCheck, 
+  FaTimes, FaChevronLeft, FaChevronRight, FaBoxOpen 
+} from 'react-icons/fa';
 import 'react-toastify/dist/ReactToastify.css';
 import './AllOrders.css';
 
 const AllOrders = () => {
   const [orders, setOrders] = useState([]);
+  const [filteredOrders, setFilteredOrders] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+  
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [ordersPerPage] = useState(10);
+  
+  // Modal State
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  
   const navigate = useNavigate();
 
-  // ================================
-  // Fetch all orders
-  // ================================
   useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const res = await axios.get('http://localhost:5000/api/order/all');
-        if (Array.isArray(res.data)) {
-          setOrders(res.data);
-        } else if (Array.isArray(res.data.orders)) {
-          setOrders(res.data.orders);
-        } else {
-          setError('Invalid data format from server');
-        }
-      } catch (err) {
-        console.error(err);
-        setError('Failed to load orders');
-      }
-    };
     fetchOrders();
   }, []);
 
-  // ================================
-  // Update order status (Delivered / Cancelled)
-  // ================================
+  const fetchOrders = async () => {
+    try {
+      setLoading(true);
+      const res = await axios.get('/api/order/all');
+      let data = [];
+      if (Array.isArray(res.data)) {
+        data = res.data;
+      } else if (Array.isArray(res.data.orders)) {
+        data = res.data.orders;
+      } else {
+        setError('Invalid data format from server');
+      }
+      setOrders(data);
+      setFilteredOrders(data);
+    } catch (err) {
+      console.error(err);
+      setError('Failed to load orders');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const results = orders.filter(order => 
+      (order.orderId || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (order.address?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (order.restaurantName || '').toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setFilteredOrders(results);
+    setCurrentPage(1); // Reset to first page on search
+  }, [searchTerm, orders]);
+
+  // Get current orders for pagination
+  const indexOfLastOrder = currentPage * ordersPerPage;
+  const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
+  const currentOrders = filteredOrders.slice(indexOfFirstOrder, indexOfLastOrder);
+  const totalPages = Math.ceil(filteredOrders.length / ordersPerPage);
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
-      const res = await axios.put(`http://localhost:5000/api/order/${orderId}`, {
+      const res = await axios.put(`/api/order/${orderId}`, {
         status: newStatus,
       });
 
@@ -57,22 +92,11 @@ const AllOrders = () => {
     }
   };
 
-  const handleMarkDelivered = (orderId) => {
-    updateOrderStatus(orderId, 'Delivered');
-  };
-
-  const handleMarkCancelled = (orderId) => {
-    updateOrderStatus(orderId, 'Cancelled');
-  };
-
-  // ================================
-  // Delete order
-  // ================================
   const handleDelete = async (orderId) => {
     if (!window.confirm('Are you sure you want to delete this order?')) return;
 
     try {
-      await axios.delete(`http://localhost:5000/api/order/${orderId}`);
+      await axios.delete(`/api/order/${orderId}`);
       setOrders((prev) => prev.filter((order) => order._id !== orderId));
       toast.success('Order deleted successfully');
     } catch (err) {
@@ -81,128 +105,252 @@ const AllOrders = () => {
     }
   };
 
-  // ================================
-  // View full order details (Popup)
-  // ================================
   const handleView = (order) => {
-    toast.info(
-      <>
-        <strong>Order ID:</strong> {order.orderId}<br />
-        <strong>Restaurant:</strong> {order.restaurantName}<br /><br />
-
-        <strong>Customer:</strong> {order.address?.name || "N/A"} <br />
-        <strong>Address:</strong> {order.address?.line1}, {order.address?.city} - {order.address?.pincode}<br /><br />
-
-        <strong>Items:</strong>
-        <ul>
-          {order.items?.map((item, i) => (
-            <li key={i}>{item.name} × {item.quantity}</li>
-          ))}
-        </ul>
-        <strong>Total Amount:</strong> ₹{order.total}<br />
-        <strong>Status:</strong> {order.status}
-      </>,
-      {
-        position: "top-right",
-        autoClose: 8000,
-      }
-    );
+    setSelectedOrder(order);
+    setShowModal(true);
   };
 
-  // ======================================
-  // Render
-  // ======================================
+  const handleCloseModal = () => {
+    setSelectedOrder(null);
+    setShowModal(false);
+  };
+
+  const getStatusBadgeClass = (status) => {
+    switch (status?.toLowerCase()) {
+      case 'delivered': return 'badge delivered';
+      case 'cancelled': return 'badge cancelled';
+      case 'pending': return 'badge pending';
+      case 'processing': return 'badge processing';
+      default: return 'badge pending';
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="all-orders-page">
+        <div className="page-header">
+          <h2>All Orders</h2>
+        </div>
+        <div className="orders-card" style={{ padding: '3rem', textAlign: 'center' }}>
+          <p>Loading orders...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="all-orders-container">
-      <h2>All Orders</h2>
+    <div className="all-orders-page">
+      <div className="page-header">
+        <h2>All Orders</h2>
+        <div className="table-controls">
+          <div className="search-wrapper">
+            <FaSearch className="search-icon" />
+            <input 
+              type="text" 
+              placeholder="Search ID, customer, restaurant..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+        </div>
+      </div>
 
-      <div className="table-wrapper">
-        <table className="orders-table">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Order ID</th>
-              <th>Customer</th>
-              <th>Restaurant</th>
-              <th>Items</th>
-              <th>Total (₹)</th>
-              <th>Status</th>
-              <th>Delivery</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {orders.length > 0 ? (
-              orders.map((order, index) => (
-                <tr key={order._id}>
-                  <td>{index + 1}</td>
-                  <td>{order.orderId}</td>
-                  <td>{order.address?.name || 'N/A'}</td>
-                  <td>{order.restaurantName}</td>
-
-                  <td>
-                    {order.items?.map((item, idx) => (
-                      <div key={idx}>
-                        {item.name} × {item.quantity}
+      <div className="orders-card">
+        <div className="table-responsive">
+          <table className="custom-table">
+            <thead>
+              <tr>
+                <th>Order Info</th>
+                <th>Customer</th>
+                <th>Restaurant</th>
+                <th>Total</th>
+                <th>Status</th>
+                <th style={{ textAlign: 'right' }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {currentOrders.length > 0 ? (
+                currentOrders.map((order) => (
+                  <tr key={order._id}>
+                    <td>
+                      <div className="order-id-cell">{order.orderId}</div>
+                      <div className="items-list">
+                        {order.items?.slice(0, 2).map((item, idx) => (
+                          <span key={idx} className="item-row">
+                            {item.name} × {item.quantity}
+                          </span>
+                        ))}
+                        {order.items?.length > 2 && (
+                          <span className="item-row" style={{ fontStyle: 'italic' }}>
+                            + {order.items.length - 2} more items
+                          </span>
+                        )}
                       </div>
-                    ))}
-                  </td>
-
-                  <td>₹{order.total}</td>
-
-                  <td className="status-cell">
-                    {order.status === 'Delivered' ? (
-                      <span className="status-delivered">Delivered</span>
-                    ) : order.status === 'Cancelled' ? (
-                      <span className="status-cancelled">Cancelled</span>
-                    ) : (
-                      <span className="status-pending">{order.status}</span>
-                    )}
-                  </td>
-
-                  <td>
-                    {(order.status !== 'Delivered' && order.status !== 'Cancelled') && (
-                      <>
-                        <button
-                          className="deliver-button"
-                          onClick={() => handleMarkDelivered(order._id)}
-                        >
-                          Mark Delivered
+                    </td>
+                    <td>{order.address?.name || 'N/A'}</td>
+                    <td>{order.restaurantName}</td>
+                    <td style={{ fontWeight: '600' }}>₹{order.total}</td>
+                    <td>
+                      <span className={getStatusBadgeClass(order.status)}>
+                        {order.status}
+                      </span>
+                    </td>
+                    <td>
+                      <div className="actions-cell" style={{ justifyContent: 'flex-end' }}>
+                        {order.status !== 'Delivered' && order.status !== 'Cancelled' && (
+                          <>
+                            <button 
+                              className="btn-icon deliver" 
+                              title="Mark Delivered"
+                              onClick={() => updateOrderStatus(order._id, 'Delivered')}
+                            >
+                              <FaCheck />
+                            </button>
+                            <button 
+                              className="btn-icon cancel" 
+                              title="Cancel Order"
+                              onClick={() => updateOrderStatus(order._id, 'Cancelled')}
+                            >
+                              <FaTimes />
+                            </button>
+                          </>
+                        )}
+                        <button className="btn-icon view" title="View Details" onClick={() => handleView(order)}>
+                          <FaEye />
                         </button>
-
-                        <button
-                          className="cancel-button"
-                          onClick={() => handleMarkCancelled(order._id)}
-                          style={{ marginLeft: '8px' }}
+                        <button 
+                          className="btn-icon edit" 
+                          title="Edit Order" 
+                          onClick={() => navigate(`/admin/edit-order/${order._id}`)}
                         >
-                          Cancel
+                          <FaEdit />
                         </button>
-                      </>
-                    )}
-                  </td>
-
-                  <td>
-                    <div className="action-buttons">
-                      <button onClick={() => handleView(order)}>View</button>
-                      <button onClick={() => navigate(`/admin/edit-order/${order._id}`)}>Edit</button>
-                      <button onClick={() => handleDelete(order._id)} className="delete-btn">
-                        Delete
-                      </button>
-                    </div>
+                        <button className="btn-icon delete" title="Delete Order" onClick={() => handleDelete(order._id)}>
+                          <FaTrash />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="6" style={{ padding: '3rem', textAlign: 'center', color: '#6b7280' }}>
+                    <FaBoxOpen style={{ fontSize: '3rem', marginBottom: '1rem', opacity: 0.3 }} />
+                    <p>{error || 'No orders found.'}</p>
                   </td>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan="9" className="no-orders">
-                  {error || 'No orders found.'}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="pagination">
+          <button 
+            className="page-btn" 
+            onClick={() => paginate(currentPage - 1)}
+            disabled={currentPage === 1}
+          >
+            <FaChevronLeft />
+          </button>
+          
+          <span className="page-info">
+            Page {currentPage} of {totalPages}
+          </span>
+
+          <button 
+            className="page-btn" 
+            onClick={() => paginate(currentPage + 1)}
+            disabled={currentPage === totalPages}
+          >
+            <FaChevronRight />
+          </button>
+        </div>
+      )}
+
+      {/* View Modal */}
+      {showModal && selectedOrder && (
+        <div className="modal-overlay" onClick={handleCloseModal}>
+          <div className="modal-container" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Order Details: {selectedOrder.orderId}</h3>
+              <button className="modal-close" onClick={handleCloseModal}>
+                <FaTimes />
+              </button>
+            </div>
+            <div className="modal-body">
+              <div className="order-detail-section">
+                <h4>Customer Info</h4>
+                <div className="detail-grid">
+                  <div className="detail-item">
+                    <label>Name</label>
+                    <p>{selectedOrder.address?.name || 'N/A'}</p>
+                  </div>
+                  <div className="detail-item">
+                    <label>Phone</label>
+                    <p>{selectedOrder.address?.phone || 'N/A'}</p>
+                  </div>
+                  <div className="detail-item" style={{ gridColumn: 'span 2' }}>
+                    <label>Delivery Address</label>
+                    <p>{selectedOrder.address?.line1}, {selectedOrder.address?.city} - {selectedOrder.address?.pincode}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="order-detail-section">
+                <h4>Order Summary</h4>
+                <div className="detail-grid">
+                  <div className="detail-item">
+                    <label>Restaurant</label>
+                    <p>{selectedOrder.restaurantName}</p>
+                  </div>
+                  <div className="detail-item">
+                    <label>Status</label>
+                    <span className={getStatusBadgeClass(selectedOrder.status)}>{selectedOrder.status}</span>
+                  </div>
+                  <div className="detail-item">
+                    <label>Ordered On</label>
+                    <p>{new Date(selectedOrder.createdAt).toLocaleString()}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="order-detail-section">
+                <h4>Items</h4>
+                <table className="order-items-table">
+                  <thead>
+                    <tr>
+                      <th>Item Name</th>
+                      <th>Qty</th>
+                      <th style={{ textAlign: 'right' }}>Price</th>
+                      <th style={{ textAlign: 'right' }}>Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {selectedOrder.items?.map((item, i) => (
+                      <tr key={i}>
+                        <td>{item.name}</td>
+                        <td>{item.quantity}</td>
+                        <td style={{ textAlign: 'right' }}>₹{item.price}</td>
+                        <td style={{ textAlign: 'right' }}>₹{item.price * item.quantity}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <div className="total-row">
+                  <span>Grand Total</span>
+                  <span>₹{selectedOrder.total}</span>
+                </div>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn-primary" onClick={handleCloseModal}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <ToastContainer />
     </div>

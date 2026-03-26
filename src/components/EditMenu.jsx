@@ -20,7 +20,7 @@ const EditMenu = () => {
 
   // ✅ Fetch Restaurants
   useEffect(() => {
-    axios.get('http://localhost:5000/api/restaurants/list')
+    axios.get('/api/restaurants/list')
       .then((res) => {
         setRestaurants(Array.isArray(res.data) ? res.data : []);
       })
@@ -34,7 +34,7 @@ const EditMenu = () => {
   useEffect(() => {
     const fetchMenu = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/menu/admin/menus');
+        const res = await axios.get('/api/menu/admin/menus');
         const menuList = Array.isArray(res.data) ? res.data : [];
         const found = menuList.find((item) => item._id?.toString() === id?.toString());
 
@@ -79,7 +79,7 @@ const EditMenu = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.put(`http://localhost:5000/api/menu/admin/menus/${id}`, menu);
+      await axios.put(`/api/menu/admin/menus/${id}`, menu);
       alert('Menu updated successfully!');
       navigate('/admin/menulist ');
     } catch (err) {

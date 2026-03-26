@@ -17,7 +17,7 @@ const EditRestaurant = () => {
 
   useEffect(() => {
     axios
-      .get(`http://localhost:5000/api/restaurants/list/${id}`)
+      .get(`/api/restaurants/list/${id}`)
       .then((res) => setFormData(res.data))
       .catch((err) => console.error('Fetch failed', err));
   }, [id]);
@@ -40,7 +40,7 @@ const EditRestaurant = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.put(`http://localhost:5000/api/restaurants/edit/${id}`, formData);
+      await axios.put(`/api/restaurants/edit/${id}`, formData);
       alert('Restaurant updated successfully');
       navigate('/admin/restaurant');
     } catch (err) {

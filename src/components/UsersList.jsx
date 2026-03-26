@@ -1,32 +1,52 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { FaEye, FaEdit, FaTrash, FaSearch, FaTimes, FaUser } from 'react-icons/fa';
+import './UsersList.css';
 
 const UsersList = () => {
   const navigate = useNavigate();
   const [users, setUsers] = useState([]);
+  const [filteredUsers, setFilteredUsers] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [selectedUser, setSelectedUser] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    axios
-      .get('http://localhost:5000/food-ordering-app/api/user/userslist')
-      .then((res) => {
-        setUsers(res.data);
-      })
-      .catch((err) => {
-        console.error('Error fetching users:', err);
-        setUsers([]);
-      });
+    fetchUsers();
   }, []);
 
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const res = await axios.get('/food-ordering-app/api/user/userslist');
+      setUsers(res.data);
+      setFilteredUsers(res.data);
+    } catch (err) {
+      console.error('Error fetching users:', err);
+      setUsers([]);
+      setFilteredUsers([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const results = users.filter(user => 
+      (user.fullname || user.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.email || '').toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setFilteredUsers(results);
+  }, [searchTerm, users]);
+
   const handleDelete = async (userId) => {
-    const confirm = window.confirm('Are you sure you want to delete this user?');
+    const confirm = window.confirm('Are you sure you want to delete this user? This action cannot be undone.');
     if (!confirm) return;
 
     try {
       const res = await axios.delete(
-        `http://localhost:5000/food-ordering-app/api/user/deleteProfile/${userId}`
+        `/food-ordering-app/api/user/deleteProfile/${userId}`
       );
 
       if (res.status === 200) {
@@ -51,78 +71,157 @@ const UsersList = () => {
     setShowModal(false);
   };
 
+  if (loading) {
+    return (
+      <div className="users-list-page">
+        <div className="page-header">
+          <h2>Users Info</h2>
+        </div>
+        <div className="users-card" style={{ padding: '2rem', textAlign: 'center' }}>
+          <p>Loading users...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="admin-users-container">
-      <h2>Users Info</h2>
-      {users.length === 0 ? (
-        <p>No users found.</p>
-      ) : (
-        <table className="users-table">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Full Name</th>
-              <th>Email</th>
-              <th>Role</th>
-              <th>Status</th> {/* ✅ Added Status Header */}
-              <th>Joined</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((user, index) => (
-              <tr key={user._id}>
-                <td>{index + 1}</td>
-                <td>{user.fullname || user.name}</td>
-                <td>{user.email}</td>
-                <td>{user.role || 'User'}</td>
-                <td>{user.status || 'Active'}</td> {/* ✅ Show status or default */}
-                <td>{new Date(user.createdAt).toLocaleDateString()}</td>
-                <td>
-                  <button onClick={() => handleView(user)}>View</button>
-                  <button onClick={() => navigate(`/EditProfile/${user._id}`)}>Edit</button>
-                  <button onClick={() => handleDelete(user._id)}>Delete</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-
-      {/* Modal */}
-      {showModal && selectedUser && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h3>User Details</h3>
-            <p><strong>Name:</strong> {selectedUser.fullname || selectedUser.name}</p>
-            <p><strong>Email:</strong> {selectedUser.email}</p>
-            <p><strong>Phone:</strong> {selectedUser.phone || 'N/A'}</p>
-            <p><strong>Role:</strong> {selectedUser.role || 'User'}</p>
-            <p><strong>Status:</strong> {selectedUser.status || 'Active'}</p> 
-            <p><strong>Joined:</strong> {new Date(selectedUser.createdAt).toLocaleString()}</p>
-           {selectedUser.deliveryAddress && (
-           <div>
-            <strong>Address:</strong>
-            <p>{selectedUser.deliveryAddress.line1}</p>
-            <p>{selectedUser.deliveryAddress.line2}</p>
-            <p>{selectedUser.deliveryAddress.city} - {selectedUser.deliveryAddress.pincode}</p>
+    <div className="users-list-page">
+      <div className="page-header">
+        <h2>Users Info</h2>
+        <div className="table-controls">
+          <div className="search-wrapper">
+            <FaSearch className="search-icon" />
+            <input 
+              type="text" 
+              placeholder="Search by name or email..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
-          )}
+        </div>
+      </div>
 
-            {selectedUser.profilePic && (
-              <img
-                src={selectedUser.profilePic}
-                alt="Profile"
-                style={{
-                  width: '120px',
-                  height: '120px',
-                  borderRadius: '50%',
-                  marginTop: '10px',
-                }}
-              />
-            )}
-            <br />
-            <button onClick={handleCloseModal}>Close</button>
+      <div className="users-card">
+        {filteredUsers.length === 0 ? (
+          <div style={{ padding: '2rem', textAlign: 'center', color: '#6b7280' }}>
+            <p>No users found matching your search.</p>
+          </div>
+        ) : (
+          <div className="table-responsive">
+            <table className="custom-table">
+              <thead>
+                <tr>
+                  <th>User</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th>Joined</th>
+                  <th style={{ textAlign: 'right' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredUsers.map((user) => (
+                  <tr key={user._id}>
+                    <td>
+                      <div className="user-cell">
+                        {user.profilePic ? (
+                          <img src={user.profilePic} alt="" className="user-avatar" />
+                        ) : (
+                          <div className="user-avatar"><FaUser /></div>
+                        )}
+                        <div className="user-info-cell">
+                          <span className="name">{user.fullname || user.name}</span>
+                          <span className="email">{user.email}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <span className={`badge ${user.role?.toLowerCase() || 'user'}`}>
+                        {user.role || 'User'}
+                      </span>
+                    </td>
+                    <td>
+                      <span className={`badge ${user.status?.toLowerCase() || 'active'}`}>
+                        {user.status || 'Active'}
+                      </span>
+                    </td>
+                    <td>{new Date(user.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}</td>
+                    <td>
+                      <div className="actions-cell" style={{ justifyContent: 'flex-end' }}>
+                        <button className="btn-icon view" title="View Details" onClick={() => handleView(user)}>
+                          <FaEye />
+                        </button>
+                        <button className="btn-icon edit" title="Edit User" onClick={() => navigate(`/EditProfile/${user._id}`)}>
+                          <FaEdit />
+                        </button>
+                        <button className="btn-icon delete" title="Delete User" onClick={() => handleDelete(user._id)}>
+                          <FaTrash />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Modern Modal */}
+      {showModal && selectedUser && (
+        <div className="modal-overlay" onClick={handleCloseModal}>
+          <div className="modal-container" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>User Details</h3>
+              <button className="modal-close" onClick={handleCloseModal}>
+                <FaTimes />
+              </button>
+            </div>
+            
+            <div className="modal-body">
+              <div className="user-profile-summary">
+                {selectedUser.profilePic ? (
+                  <img src={selectedUser.profilePic} alt="Profile" className="modal-avatar" />
+                ) : (
+                  <div className="modal-avatar" style={{ backgroundColor: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem', color: '#9ca3af' }}>
+                    <FaUser />
+                  </div>
+                )}
+                <h4 className="modal-name">{selectedUser.fullname || selectedUser.name}</h4>
+                <span className="modal-email">{selectedUser.email}</span>
+              </div>
+
+              <div className="details-grid">
+                <div className="detail-item">
+                  <label>Phone</label>
+                  <p>{selectedUser.phone || 'N/A'}</p>
+                </div>
+                <div className="detail-item">
+                  <label>Role</label>
+                  <p>{selectedUser.role || 'User'}</p>
+                </div>
+                <div className="detail-item">
+                  <label>Status</label>
+                  <p>{selectedUser.status || 'Active'}</p>
+                </div>
+                <div className="detail-item">
+                  <label>Joined Date</label>
+                  <p>{new Date(selectedUser.createdAt).toLocaleDateString(undefined, { dateStyle: 'long' })}</p>
+                </div>
+
+                {selectedUser.deliveryAddress && (
+                  <div className="address-section">
+                    <label>Delivery Address</label>
+                    <p>{selectedUser.deliveryAddress.line1}</p>
+                    {selectedUser.deliveryAddress.line2 && <p>{selectedUser.deliveryAddress.line2}</p>}
+                    <p>{selectedUser.deliveryAddress.city} - {selectedUser.deliveryAddress.pincode}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button className="btn-primary" onClick={handleCloseModal}>Close</button>
+            </div>
           </div>
         </div>
       )}
@@ -131,4 +230,3 @@ const UsersList = () => {
 };
 
 export default UsersList;
-

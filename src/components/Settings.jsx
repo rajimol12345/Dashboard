@@ -16,23 +16,37 @@ const Settings = () => {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/profile");
+        // Correcting endpoint to match backend router mounting point
+        const res = await axios.get("/api/settings/profile");
+        const data = res.data || {};
         setSettings((prev) => ({
           ...prev,
-          name: res.data.name || "",
-          email: res.data.email || "",
+          name: data.name || "",
+          email: data.email || "",
+          password: "",           // Ensure password fields are always strings
+          confirmPassword: "",
         }));
       } catch (err) {
         console.error("Error loading profile:", err);
         toast.error("Failed to load profile");
+        // Maintain defined state even on error to prevent "controlled to uncontrolled" warning
+        setSettings(prev => ({
+          ...prev,
+          name: "",
+          email: "",
+          password: "",
+          confirmPassword: "",
+        }));
       }
     };
     fetchSettings();
   }, []);
 
   // Handle input change
-  const handleChange = (e) =>
-    setSettings({ ...settings, [e.target.name]: e.target.value });
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setSettings(prev => ({ ...prev, [name]: value || "" }));
+  };
 
   // Handle submit
   const handleSubmit = async (e) => {
@@ -44,7 +58,7 @@ const Settings = () => {
 
     setLoading(true);
     try {
-      await axios.post("http://localhost:5000/api/settings", {
+      await axios.post("/api/settings/settings", {
         name: settings.name,
         email: settings.email,
         password: settings.password || undefined,

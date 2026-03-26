@@ -11,7 +11,7 @@ const AdminNotification = () => {
   // Fetch notifications from backend
   const fetchNotifications = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/admin/notifications');
+      const res = await axios.get('/api/admin/notifications');
       if (Array.isArray(res.data)) {
         setNotifications(res.data);
       } else if (Array.isArray(res.data.notifications)) {
@@ -56,7 +56,7 @@ const AdminNotification = () => {
   // Mark notification as read & remove it with fade
   const markAsRead = async (id) => {
     try {
-      await axios.patch(`http://localhost:5000/api/admin/notifications/${id}/read`);
+      await axios.patch(`/api/admin/notifications/${id}/read`);
       setFadingId(id);
       setTimeout(() => {
         setNotifications((prev) => prev.filter((n) => n._id !== id));
@@ -70,7 +70,7 @@ const AdminNotification = () => {
   // Clear all notifications
   const clearAllNotifications = async () => {
     try {
-      await axios.delete('http://localhost:5000/api/admin/notifications/clear');
+      await axios.delete('/api/admin/notifications/clear');
       setNotifications([]);
     } catch (err) {
       console.error('Error clearing all notifications:', err);
