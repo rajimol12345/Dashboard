@@ -12,7 +12,6 @@ const SupportChat = () => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [userMap, setUserMap] = useState({});
   const messagesEndRef = useRef(null);
 
   // Admin ID - can be hardcoded or from Auth
@@ -22,23 +21,18 @@ const SupportChat = () => {
     // Join admin room
     socket.emit('join_admin');
 
-    // Fetch initial conversations and users
+    // Fetch initial conversations
     fetchConversations();
-    fetchUsers();
 
     // Listen for new messages (discovery)
     socket.on('new_admin_message', (data) => {
-      setConversations((prev) => {
-        if (!prev.includes(data.senderId)) {
-          return [data.senderId, ...prev];
-        }
-        return prev;
-      });
+      // Refresh list to get new user details
+      fetchConversations();
     });
 
     // Listen for incoming messages in selected chat
     socket.on('receive_message', (data) => {
-      if (selectedUser === data.senderId) {
+      if (selectedUser?.userId === data.senderId) {
         setMessages((prev) => [...prev, data]);
       }
     });
@@ -51,8 +45,8 @@ const SupportChat = () => {
 
   useEffect(() => {
     if (selectedUser) {
-      fetchChatHistory(selectedUser);
-      socket.emit('join_chat', selectedUser); // Admin joins the user's private room to reply
+      fetchChatHistory(selectedUser.userId);
+      socket.emit('join_chat', selectedUser.userId); // Admin joins the user's private room to reply
     }
   }, [selectedUser]);
 
@@ -61,19 +55,6 @@ const SupportChat = () => {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages]);
-
-  const fetchUsers = async () => {
-    try {
-      const res = await axios.get('/food-ordering-app/api/user/userslist');
-      const map = {};
-      res.data.forEach(user => {
-        map[user._id] = user.fullname || user.name || user.email;
-      });
-      setUserMap(map);
-    } catch (error) {
-      console.error("Error fetching users:", error);
-    }
-  };
 
   const fetchConversations = async () => {
     try {
@@ -99,7 +80,7 @@ const SupportChat = () => {
 
     const msgData = {
       senderId: adminId,
-      receiverId: selectedUser,
+      receiverId: selectedUser.userId,
       message: input,
       role: 'admin'
     };
@@ -109,14 +90,10 @@ const SupportChat = () => {
     setInput('');
   };
 
-  const filteredConversations = conversations.filter(userId => {
-    const userName = userMap[userId] || userId;
-    return userName.toLowerCase().includes(searchQuery.toLowerCase());
-  });
-
-  const getUserDisplayName = (userId) => {
-    return userMap[userId] || userId;
-  };
+  const filteredConversations = conversations.filter(conv => 
+    (conv.fullname || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (conv.userId || "").toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className="support-chat-container">
@@ -135,17 +112,21 @@ const SupportChat = () => {
         </div>
         <div className="conversation-list">
           {filteredConversations.length > 0 ? (
-            filteredConversations.map((userId) => (
+            filteredConversations.map((conv) => (
               <div 
-                key={userId} 
-                className={`conversation-item ${selectedUser === userId ? 'active' : ''}`}
-                onClick={() => setSelectedUser(userId)}
+                key={conv.userId} 
+                className={`conversation-item ${selectedUser?.userId === conv.userId ? 'active' : ''}`}
+                onClick={() => setSelectedUser(conv)}
               >
                 <div className="user-avatar">
-                  <FaUserCircle />
+                  {conv.profilePic ? (
+                    <img src={conv.profilePic} alt={conv.fullname} className="avatar-img" />
+                  ) : (
+                    <FaUserCircle />
+                  )}
                 </div>
                 <div className="user-info">
-                  <span className="username">{getUserDisplayName(userId)}</span>
+                  <span className="username">{conv.fullname}</span>
                   <span className="last-msg">Click to view chat</span>
                 </div>
               </div>
@@ -161,9 +142,15 @@ const SupportChat = () => {
           <>
             <div className="chat-header">
               <div className="active-user-info">
-                <FaUserCircle className="user-icon" />
+                <div className="user-icon">
+                  {selectedUser.profilePic ? (
+                    <img src={selectedUser.profilePic} alt={selectedUser.fullname} className="avatar-img-header" />
+                  ) : (
+                    <FaUserCircle />
+                  )}
+                </div>
                 <div>
-                  <h4>{getUserDisplayName(selectedUser)}</h4>
+                  <h4>{selectedUser.fullname}</h4>
                   <span className="status">Active Chat</span>
                 </div>
               </div>
